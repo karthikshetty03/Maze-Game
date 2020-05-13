@@ -1,41 +1,42 @@
-const { Engine, Runner, Render, World, Bodies } = Matter;
+const { Engine, Render, Runner, World, Bodies } = Matter;
+
+const cells = 3;
+const width = 600;
+const height = 600;
+
+const unitLength = width / cells;
 
 const engine = Engine.create();
 const { world } = engine;
-
-const cells = 6;
-const width = 600;
-const height = 600;
-const unitLength = width / cells;
-
 const render = Render.create({
   element: document.body,
-  engine,
+  engine: engine,
   options: {
+    wireframes: true,
     width,
     height,
-    wireframes: false,
   },
 });
-
 Render.run(render);
 Runner.run(Runner.create(), engine);
 
-//walls
+// Walls
 const walls = [
   Bodies.rectangle(width / 2, 0, width, 40, { isStatic: true }),
   Bodies.rectangle(width / 2, height, width, 40, { isStatic: true }),
   Bodies.rectangle(0, height / 2, 40, height, { isStatic: true }),
   Bodies.rectangle(width, height / 2, 40, height, { isStatic: true }),
 ];
-
 World.add(world, walls);
+
+// Maze generation
 
 const shuffle = (arr) => {
   let counter = arr.length;
 
   while (counter > 0) {
     const index = Math.floor(Math.random() * counter);
+
     counter--;
 
     const temp = arr[counter];
@@ -60,28 +61,28 @@ const horizontals = Array(cells - 1)
 
 const startRow = Math.floor(Math.random() * cells);
 const startColumn = Math.floor(Math.random() * cells);
-//console.log(startRow, startColumn);
 
 const stepThroughCell = (row, column) => {
-  if (grid[row][column] == true) {
+  // If i have visted the cell at [row, column], then return
+  if (grid[row][column]) {
     return;
   }
 
+  // Mark this cell as being visited
   grid[row][column] = true;
 
-  const neighbours = shuffle([
+  // Assemble randomly-ordered list of neighbors
+  const neighbors = shuffle([
     [row - 1, column, "up"],
     [row, column + 1, "right"],
     [row + 1, column, "down"],
     [row, column - 1, "left"],
   ]);
+  // For each neighbor....
+  for (let neighbor of neighbors) {
+    const [nextRow, nextColumn, direction] = neighbor;
 
-  for (let neighbour of neighbours) {
-    //console.log(neighbour);
-    const [nextRow, nextColumn, direction] = neighbour;
-
-    console.log(nextColumn, nextRow, direction);
-
+    // See if that neighbor is out of bounds
     if (
       nextRow < 0 ||
       nextRow >= cells ||
@@ -91,17 +92,19 @@ const stepThroughCell = (row, column) => {
       continue;
     }
 
-    if (grid[nextRow][nextColumn] == true) {
-      return;
+    // If we have visited that neighbor, continue to next neighbor
+    if (grid[nextRow][nextColumn]) {
+      continue;
     }
 
-    if (direction == "left") {
+    // Remove a wall from either horizontals or verticals
+    if (direction === "left") {
       verticals[row][column - 1] = true;
-    } else if (direction == "right") {
+    } else if (direction === "right") {
       verticals[row][column] = true;
-    } else if (direction == "up") {
+    } else if (direction === "up") {
       horizontals[row - 1][column] = true;
-    } else if (direction == "down") {
+    } else if (direction === "down") {
       horizontals[row][column] = true;
     }
 
@@ -111,12 +114,9 @@ const stepThroughCell = (row, column) => {
 
 stepThroughCell(startRow, startColumn);
 
-//console.log(verticals);
-//console.log(horizontals);
-
 horizontals.forEach((row, rowIndex) => {
   row.forEach((open, columnIndex) => {
-    if (open == true) {
+    if (open) {
       return;
     }
 
@@ -124,12 +124,11 @@ horizontals.forEach((row, rowIndex) => {
       columnIndex * unitLength + unitLength / 2,
       rowIndex * unitLength + unitLength,
       unitLength,
-      10,
+      5,
       {
         isStatic: true,
       }
     );
-
     World.add(world, wall);
   });
 });
@@ -143,13 +142,12 @@ verticals.forEach((row, rowIndex) => {
     const wall = Bodies.rectangle(
       columnIndex * unitLength + unitLength,
       rowIndex * unitLength + unitLength / 2,
-      10,
+      5,
       unitLength,
       {
         isStatic: true,
       }
     );
-
     World.add(world, wall);
   });
 });
