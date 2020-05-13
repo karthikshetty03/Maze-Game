@@ -3,9 +3,10 @@ const { Engine, Runner, Render, World, Bodies } = Matter;
 const engine = Engine.create();
 const { world } = engine;
 
-const cells = 3;
+const cells = 6;
 const width = 600;
 const height = 600;
+const unitLength = width / cells;
 
 const render = Render.create({
   element: document.body,
@@ -13,7 +14,7 @@ const render = Render.create({
   options: {
     width,
     height,
-    wireframes: true,
+    wireframes: false,
   },
 });
 
@@ -79,11 +80,7 @@ const stepThroughCell = (row, column) => {
     //console.log(neighbour);
     const [nextRow, nextColumn, direction] = neighbour;
 
-    //console.log(nextColumn, nextRow, direction);
-
-    if (grid[nextRow][nextColumn] == true) {
-      return;
-    }
+    console.log(nextColumn, nextRow, direction);
 
     if (
       nextRow < 0 ||
@@ -92,6 +89,10 @@ const stepThroughCell = (row, column) => {
       nextColumn >= cells
     ) {
       continue;
+    }
+
+    if (grid[nextRow][nextColumn] == true) {
+      return;
     }
 
     if (direction == "left") {
@@ -106,7 +107,6 @@ const stepThroughCell = (row, column) => {
 
     stepThroughCell(nextRow, nextColumn);
   }
-
 };
 
 stepThroughCell(startRow, startColumn);
@@ -114,4 +114,42 @@ stepThroughCell(startRow, startColumn);
 //console.log(verticals);
 //console.log(horizontals);
 
+horizontals.forEach((row, rowIndex) => {
+  row.forEach((open, columnIndex) => {
+    if (open == true) {
+      return;
+    }
 
+    const wall = Bodies.rectangle(
+      columnIndex * unitLength + unitLength / 2,
+      rowIndex * unitLength + unitLength,
+      unitLength,
+      10,
+      {
+        isStatic: true,
+      }
+    );
+
+    World.add(world, wall);
+  });
+});
+
+verticals.forEach((row, rowIndex) => {
+  row.forEach((open, columnIndex) => {
+    if (open) {
+      return;
+    }
+
+    const wall = Bodies.rectangle(
+      columnIndex * unitLength + unitLength,
+      rowIndex * unitLength + unitLength / 2,
+      10,
+      unitLength,
+      {
+        isStatic: true,
+      }
+    );
+
+    World.add(world, wall);
+  });
+});
